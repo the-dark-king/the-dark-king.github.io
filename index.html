@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mantenimiento de Personas</title>
+<style>
+  /* Estilos CSS */
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+  }
+
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .form-group button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .table-container {
+    margin-top: 20px;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+  }
+
+  .table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .table tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  .actions button {
+    padding: 8px 12px;
+    background-color: #2196F3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+</style>
+
+  <style>
+    /* Estilos neoclásicos */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    form {
+      margin-bottom: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    .pagination {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .pagination button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+
+    .pagination button.active {
+      background-color: #45a049;
+    }
+
+    .floating-form {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 20px;
+      display: none;
+    }
+
+    .floating-form h2 {
+      margin-top: 0;
+    }
+
+    .floating-form input {
+      margin-bottom: 10px;
+    }
+
+    .floating-form button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mantenimiento de Personas</h1>
+
+  <div class="container">
+    <form id="addForm">
+      <input type="text" id="dniInput" placeholder="DNI" required>
+      <input type="text" id="firstNameInput" placeholder="Nombre" required>
+      <input type="text" id="lastNameInput" placeholder="Apellido" required>
+      <button type="submit">Agregar</button>
+    </form>
+
+    <form id="searchForm">
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o apellido">
+      <button type="submit">Buscar</button>
+    </form>
+
+    <table id="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>DNI</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="pagination"></div>
+
+    <div class="floating-form" id="editForm">
+      <h2>Editar Persona</h2>
+      <form id="editFormData">
+        <input type="text" id="editDniInput" placeholder="DNI" required>
+        <input type="text" id="editFirstNameInput" placeholder="Nombre" required>
+        <input type="text" id="editLastNameInput" placeholder="Apellido" required>
+        <button type="submit">Guardar</button>
+        <button type="button" id="cancelEditButton">Cancelar</button>
+      </form>
+    </div>
+
+    <button id="exportButton">Guardar como Excel</button>
+
+
+
+  </div>
+
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    let people = [];
+    let currentPage = 1;
+    const pageSize = 5;
+    const table = document.querySelector("#table");
+    const pagination = document.querySelector(".pagination");
+    const addForm = document.querySelector("#addForm");
+    const searchForm = document.querySelector("#searchForm");
+    const editForm = document.querySelector("#editForm");
+    const editFormData = document.querySelector("#editFormData");
+    const editDniInput = document.querySelector("#editDniInput");
+    const editFirstNameInput = document.querySelector("#editFirstNameInput");
+    const editLastNameInput = document.querySelector("#editLastNameInput");
+
+    // Agregar personas de ejemplo
+    people = [
+      { id: 1, dni: "12345678", firstName: "Juan", lastName: "Pérez" },
+      { id: 2, dni: "87654321", firstName: "María", lastName: "Gómez" },
+      { id: 3, dni: "56781234", firstName: "Carlos", lastName: "López" },
+      { id: 4, dni: "43215678", firstName: "Ana", lastName: "Sánchez" },
+      { id: 5, dni: "87651234", firstName: "Pedro", lastName: "García" },
+      { id: 6, dni: "12348765", firstName: "Laura", lastName: "Fernández" },
+      { id: 7, dni: "87654321", firstName: "Diego", lastName: "Torres" },
+      { id: 8, dni: "12345678", firstName: "Sandra", lastName: "Molina" },
+      { id: 9, dni: "98765432", firstName: "Martín", lastName: "Gutierrez" },
+      { id: 10, dni: "87654321", firstName: "Lucía", lastName: "Ríos" },
+    ];
+
+    renderTable(people, currentPage);
+    renderPagination(people);
+
+    // Renderizar la tabla
+    function renderTable(data, page) {
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const tableBody = table.querySelector("tbody");
+      tableBody.innerHTML = "";
+
+      for (let i = start; i < end && i < data.length; i++) {
+        const person = data[i];
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${person.id}</td>
+          <td>${person.dni}</td>
+          <td>${person.firstName}</td>
+          <td>${person.lastName}</td>
+          <td>
+            <button class="editButton" data-id="${person.id}">Editar</button>
+            <button class="deleteButton" data-id="${person.id}">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      }
+
+      const editButtons = document.querySelectorAll(".editButton");
+      editButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          const personId = parseInt(button.dataset.id);
+          showEditForm(personId);
+        });
+      });
+
+      const deleteButtons = document.querySelectorAll(".deleteButton");
+      deleteButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          const personId = parseInt(button.dataset.id);
+          deletePerson(personId);
+        });
+      });
+    }
+
+    // Renderizar paginación
+    function renderPagination(data) {
+      pagination.innerHTML = "";
+      const pageCount = Math.ceil(data.length / pageSize);
+
+      for (let i = 1; i <= pageCount; i++) {
+        const button = document.createElement("button");
+        button.innerText = i;
+        button.addEventListener("click", () => {
+          currentPage = i;
+          renderTable(data, currentPage);
+        });
+
+        if (i === currentPage) {
+          button.classList.add("active");
+        }
+
+        pagination.appendChild(button);
+      }
+    }
+
+    // Agregar persona
+    addForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const dni = document.querySelector("#dniInput").value.trim();
+      const firstName = document.querySelector("#firstNameInput").value.trim();
+      const lastName = document.querySelector("#lastNameInput").value.trim();
+
+      if (!validateDni(dni)) {
+        alert("El DNI debe contener 8 dígitos numéricos");
+        return;
+      }
+
+      if (checkDuplicateDni(dni)) {
+        alert("El DNI ingresado ya existe en otro registro");
+        return;
+      }
+
+      const newPerson = {
+        id: people.length + 1,
+        dni: dni,
+        firstName: firstName,
+        lastName: lastName
+      };
+
+      people.push(newPerson);
+      renderTable(people, currentPage);
+      renderPagination(people);
+      addForm.reset();
+    });
+
+    // Buscar personas
+    searchForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const searchTerm = document.querySelector("#searchInput").value.trim().toLowerCase();
+      const filteredPeople = people.filter(person =>
+        person.firstName.toLowerCase().includes(searchTerm) ||
+        person.lastName.toLowerCase().includes(searchTerm)
+      );
+
+      renderTable(filteredPeople, 1);
+      renderPagination(filteredPeople);
+    });
+
+    // Mostrar formulario de edición
+    function showEditForm(personId) {
+      const person = people.find(p => p.id === personId);
+      if (!person) {
+        return;
+      }
+
+      editDniInput.value = person.dni;
+      editFirstNameInput.value = person.firstName;
+      editLastNameInput.value = person.lastName;
+
+      editForm.style.display = "block";
+
+      editFormData.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const newDni = editDniInput.value.trim();
+        const newFirstName = editFirstNameInput.value.trim();
+        const newLastName = editLastNameInput.value.trim();
+
+        if (!validateDni(newDni)) {
+          alert("El DNI debe contener 8 dígitos numéricos");
+          return;
+        }
+
+        if (newDni !== person.dni && checkDuplicateDni(newDni)) {
+          alert("El DNI ingresado ya existe en otro registro");
+          return;
+        }
+
+        person.dni = newDni;
+        person.firstName = newFirstName;
+        person.lastName = newLastName;
+
+        renderTable(people, currentPage);
+        editForm.style.display = "none";
+      });
+
+      const cancelEditButton = document.querySelector("#cancelEditButton");
+      cancelEditButton.addEventListener("click", () => {
+        editForm.style.display = "none";
+      });
+    }
+
+    // Eliminar persona
+    function deletePerson(personId) {
+      const confirmed = confirm("¿Estás seguro de eliminar esta persona?");
+      if (!confirmed) {
+        return;
+      }
+
+      people = people.filter(person => person.id !== personId);
+      renderTable(people, currentPage);
+      renderPagination(people);
+    }
+
+    // Validar DNI
+    function validateDni(dni) {
+      const dniRegex = /^\d{8}$/;
+      return dniRegex.test(dni);
+    }
+
+    // Verificar duplicados de DNI
+    function checkDuplicateDni(dni) {
+      return people.some(person => person.dni === dni);
+    }
+
+    // Guardar como archivo Excel
+    const exportButton = document.querySelector("#exportButton");
+    exportButton.addEventListener("click", () => {
+      const worksheet = xlsx.utils.json_to_sheet(people);
+      const workbook = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(workbook, worksheet, "Personas");
+      const excelBuffer = xlsx.write(workbook, { bookType: "xlsx", type: "array" });
+      saveExcelFile(excelBuffer, "personas.xlsx");
+    });
+
+    // Guardar archivo
+    function saveExcelFile(buffer, fileName) {
+      const blob = new Blob([buffer], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+
+  // Agregar evento click al botón Exportar a Excel
+  document.getElementById("exportButton").addEventListener("click", function() {
+    var filename = "personas.xlsx";
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.json_to_sheet(people);
+    XLSX.utils.book_append_sheet(wb, ws, "Personas");
+    XLSX.writeFile(wb, filename);
+  });
+
+  </script>
+</body>
+</html>
